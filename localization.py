@@ -69,12 +69,12 @@ def localize(input_file, dest_dir, force_update):
         if not lang_string_file:
             continue
         string_map = load_xml(lang_string_file)
-        for r in range(4, ws.max_row + 1):
+        for r in range(4, ws.max_row):
             key = ws.cell(row=r, column=1).value
             value = ws.cell(row=r, column=col).value
             print key, lang_code, value
             if not key:
-                print "no key exist at:%d,%d" % r, col
+                print "no key exist at:%d,%d" % (r, col)
                 break
             if not value:
                 print "no value found, skip"

@@ -15,24 +15,24 @@ Simple python script that can help you quickly copy all your language translatio
 * Install lxml
 
 ```
-pip install lxml
+$ pip install lxml
 ```
 
 * Install openpyxl
 ```
-pip install openpyxl
+$ pip install openpyxl
 ```
 
 ### Usage
 
 ```
-python localization.py [-v|--version] [-f|--force] 
+$ python localization.py [-v|--version] [-f|--force]
 [-i|--file] excel_file_path [-d|--dir] android_project_res_directory_path
 ```
 
 - -v|--version<br/>
 print the version of ther script
-- -f|--force(<b>option</b>)<br/> 
+- -f|--force(<b>option</b>)<br/>
 if the option is provide,the values will be updated if it's already exist,used for update or override translations.
 - -i|--file(<b>required</b>)<br/>
 followed by the excel file that contains all of the translations to be the input data
@@ -53,4 +53,3 @@ followed by the android project resource directory
     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
     See the License for the specific language governing permissions and
     limitations under the License.
-
