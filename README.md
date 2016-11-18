@@ -39,6 +39,16 @@ the excel file that contains all of the translations to be the input data or the
 - project_resource_folder<br/>
 the android project resource directory
 
+```
+Tips: the files in translation_folder_path should like below
+folder
+  -res
+    -values
+    -values-ar
+    .....
+
+```
+
 
 ## License
 
