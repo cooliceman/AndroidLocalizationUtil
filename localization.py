@@ -182,7 +182,7 @@ def find_string_resource_file_of(file_list, language_code):
     通过语言码来找到对应的string.xml文件路径
     """
     for f in file_list:
-        if language_code in f:
+        if os.path.dirname(file_).endswith(language_code):
             return f
 
 
