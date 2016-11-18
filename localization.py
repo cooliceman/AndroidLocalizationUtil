@@ -131,7 +131,7 @@ def localize(input_file, dest_dir, force_update):
         if not lang_string_file:
             continue
         string_map = load_xml(lang_string_file)
-        for r in range(4, ws.max_row):
+        for r in range(4, ws.max_row + 1):
             key = ws.cell(row=r, column=1).value
             value = ws.cell(row=r, column=col).value
             print key, lang_code, value
@@ -182,7 +182,7 @@ def find_string_resource_file_of(file_list, language_code):
     通过语言码来找到对应的string.xml文件路径
     """
     for f in file_list:
-        if os.path.dirname(file_).endswith(language_code):
+        if os.path.dirname(f).endswith(language_code):
             return f
 
 
