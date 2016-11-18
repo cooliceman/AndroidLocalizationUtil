@@ -22,10 +22,11 @@ def main(argv):
     dest_folder = ''
     force_update = False
     try:
-        opts, args = getopt.getopt(argv, "hvfi:d:", ["file=", "dir=", "version", "force"])
+        opts, args = getopt.getopt(argv, "hvf", ["version", "force"])
     except getopt.GetoptError:
         usage()
         sys.exit(2)
+    print opts,args
     for opt, arg in opts:
         if opt == '-h':
             usage()
@@ -33,28 +34,89 @@ def main(argv):
         elif opt in ("-v", "--version"):
             version()
             sys.exit()
-        elif opt in ("-i", "--file"):
-            input_file = arg
-        elif opt in ("-d", "--dir"):
-            dest_folder = arg
         elif opt in ("-f", "--force"):
             force_update = True
-    print 'Input file:', input_file
-    print 'Destination directory:', dest_folder
-    localize(input_file, dest_folder, force_update)
+    try:
+        input_file = args[0]
+        dest_folder = args[1]
+    except:
+        usage()
+        sys.exit(2)
 
+    if not input_file or not dest_folder:
+        usage()
+        sys.exit(2)
+
+    if os.path.isfile(input_file) and input_file.endswith("xlsx"):
+        print 'Input file:%s, Destination directory:%s' % (input_file, dest_folder)
+        localize(input_file, dest_folder, force_update)
+    elif os.path.isdir(input_file):
+        print 'Source directory:%s, Destination directory:%s' % (input_file, dest_folder)
+        combine_xml(input_file, dest_folder, force_update)
+    else:
+        usage()
+        sys.exit(2)
 
 def usage():
-    print 'localization.py -i <excel file> -d <destination directory>'
+    print """localization.py  [-h] [-v] excel_file_path|translation_folder_path  project_resource_folder  [-f]
+    -h  print this usage description
+    -v  printh the version
+    -f  force override
+    """
 
 
 def version():
     print "version:1.0.0"
 
+def combine_xml(src_folder, dest_folder, force_update):
+    # find string resouce file in source folder
+    src_file_list = find_string_resource_files(src_folder)
+    if not src_file_list:
+        print "No resource file found in source folder"
+    # find string resource file in destination folder
+    dest_file_list = find_string_resource_files(dest_folder)
+    if not src_file_list:
+        print "No resource file found in destination folder"
+    for src_file in src_file_list:
+        values_folder = os.path.split(os.path.dirname(src_file))[1]
+        target_file = find_string_resource_file_of(dest_file_list, values_folder)
+        if not target_file:
+            continue
+        print "start combine:%s and %s" %(src_file, target_file)
+        src_document = load_xml(src_file)
+        dest_document = load_xml(target_file)
+        # iterator the source xml document element and update the destination xml document
+        for entity in src_document.findall("string"):
+            key = entity.get("name")
+            value = entity.text
+            if not key:
+                print "Warning:no key found!!!!"
+                continue
+            if not value:
+                print "no value found, skip"
+                continue
+            if exist(dest_document, key):
+                if force_update:
+                    print "Key already exist, update"
+                    dest_document.find("string[@name='%s']" % key).text = value
+                    continue
+                else:
+                    print "I:%s already exist, skip" % key
+                    continue
+            # 新建字符结点
+            localize_element = etree.Element('string', name=key)
+            localize_element.text = value
+            # 追加结点
+            dest_document.getroot().append(localize_element)
+        dest_document.write(target_file, xml_declaration=True, encoding='UTF-8', pretty_print=True)
+
 
 def localize(input_file, dest_dir, force_update):
     # 打开多语言翻译excel文件
-    wb = openpyxl.load_workbook(input_file)
+    try:
+        wb = openpyxl.load_workbook(input_file)
+    except:
+        print "Excel file can't be open"
     # 获取默认Sheet
     ws = wb.active
     # 获取字符串资源文件列表

@@ -26,18 +26,18 @@ $ pip install openpyxl
 ### Usage
 
 ```
-$ python localization.py [-v|--version] [-f|--force]
-[-i|--file] excel_file_path [-d|--dir] android_project_res_directory_path
+$ python localization.py  [-h] [-v] [-f] excel_file_path|translation_folder_path  project_resource_folder  
 ```
-
+- -h<br/>
+print the usage summary
 - -v|--version<br/>
 print the version of ther script
 - -f|--force(<b>option</b>)<br/>
 if the option is provide,the values will be updated if it's already exist,used for update or override translations.
-- -i|--file(<b>required</b>)<br/>
-followed by the excel file that contains all of the translations to be the input data
-- -d|--dir(<b>required</b>)<br/>
-followed by the android project resource directory
+- excel_file_path|translation_folder_path<br/>
+the excel file that contains all of the translations to be the input data or the translated resource file
+- project_resource_folder<br/>
+the android project resource directory
 
 
 ## License
