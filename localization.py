@@ -26,7 +26,6 @@ def main(argv):
     except getopt.GetoptError:
         usage()
         sys.exit(2)
-    print opts,args
     for opt, arg in opts:
         if opt == '-h':
             usage()
@@ -48,10 +47,10 @@ def main(argv):
         sys.exit(2)
 
     if os.path.isfile(input_file) and input_file.endswith("xlsx"):
-        print 'Input file:%s, Destination directory:%s' % (input_file, dest_folder)
+        print 'Input file:%s\nDestination directory:%s' % (input_file, dest_folder)
         localize(input_file, dest_folder, force_update)
     elif os.path.isdir(input_file):
-        print 'Source directory:%s, Destination directory:%s' % (input_file, dest_folder)
+        print 'Source directory:%s\nDestination directory:%s' % (input_file, dest_folder)
         combine_xml(input_file, dest_folder, force_update)
     else:
         usage()
