@@ -23,18 +23,19 @@ def main(argv):
     force_update = False
     try:
         opts, args = getopt.getopt(argv, "hvf", ["version", "force"])
+        for opt, arg in opts:
+            if opt == '-h':
+                usage()
+                sys.exit()
+            elif opt in ("-v", "--version"):
+                version()
+                sys.exit()
+            elif opt in ("-f", "--force"):
+                force_update = True
     except getopt.GetoptError:
         usage()
         sys.exit(2)
-    for opt, arg in opts:
-        if opt == '-h':
-            usage()
-            sys.exit()
-        elif opt in ("-v", "--version"):
-            version()
-            sys.exit()
-        elif opt in ("-f", "--force"):
-            force_update = True
+
     try:
         input_file = args[0]
         dest_folder = args[1]
@@ -67,6 +68,7 @@ def usage():
 def version():
     print "version:1.0.0"
 
+
 def combine_xml(src_folder, dest_folder, force_update):
     # find string resouce file in source folder
     src_file_list = find_string_resource_files(src_folder)
@@ -97,7 +99,7 @@ def combine_xml(src_folder, dest_folder, force_update):
             else:
                 key = key.strip()
             if not value:
-                print "no value found, skip"
+                print "I:[%s]no value found, skip" % key
                 continue
             else:
                 value = value.strip()
