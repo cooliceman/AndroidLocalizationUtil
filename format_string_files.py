@@ -25,12 +25,18 @@ def main(argv):
 
 
 def format_file(input_file):
+    """
+    将文件整理成符合Android工程语言目录结构样式
 
+    :param input_file:待处理数据所在目录
+    :return:
+    """
     for root, folder_names, file_names in os.walk(input_file):
         for file_name in file_names:
             if file_name.endswith("_strings.xml"):
                 # 获取语言前缀
                 prefix = file_name.split("_s")[0]
+                prefix = correct_language_code(prefix)
                 print root, file_name, prefix
                 new_dir = root + "/values-" + prefix
                 # 创建values目录
@@ -53,6 +59,20 @@ def usage():
 
 def version():
     print "version:1.0.0"
+
+
+def correct_language_code(code):
+    """
+    校正不规范语言码格式
+    :param code: 从文件名中获取到的语言码
+    :return: 符合Android规范的语言码
+    """
+    parts = code.split("_")
+    if len(parts) < 2:
+        return code
+
+    parts[1] = parts[1].upper()
+    return parts[0] + "-r" + parts[1]
 
 
 if __name__ == "__main__":
