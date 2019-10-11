@@ -1,8 +1,8 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-import os, sys, getopt
+import os, sys, getopt, shutil
 import openpyxl
-
+import json
 from lxml import etree
 
 
@@ -18,20 +18,24 @@ def exist(tree, key):
 
 
 def main(argv):
-    input_file = ''
-    dest_folder = ''
     force_update = False
+    map_file = None
+    reformat = False
     try:
-        opts, args = getopt.getopt(argv, "hvf", ["version", "force"])
+        opts, args = getopt.getopt(argv, "hvrfm:", ["version", "force", "map"])
         for opt, arg in opts:
             if opt == '-h':
                 usage()
                 sys.exit()
+            elif opt == '-r':
+                reformat = True
             elif opt in ("-v", "--version"):
                 version()
                 sys.exit()
             elif opt in ("-f", "--force"):
                 force_update = True
+            elif opt in ("-m", "--map"):
+                map_file = arg
     except getopt.GetoptError:
         usage()
         sys.exit(2)
@@ -51,11 +55,19 @@ def main(argv):
         print 'Input file:%s\nDestination directory:%s' % (input_file, dest_folder)
         localize(input_file, dest_folder, force_update)
     elif os.path.isdir(input_file):
-        print 'Source directory:%s\nDestination directory:%s' % (input_file, dest_folder)
-        combine_xml(input_file, dest_folder, force_update)
+        if reformat:
+            format_file(input_file)
+
+        if map_file is None:
+            print 'Source directory:%s\nDestination directory:%s' % (input_file, dest_folder)
+            combine_xml(input_file, dest_folder, force_update)
+        else:
+            print 'Source directory:%s\nDestination directory:%s\nMapping file:%s' % (input_file, dest_folder, map_file)
+            combine(input_file, dest_folder, map_file, force_update)
     else:
         usage()
         sys.exit(2)
+
 
 def usage():
     print """localization.py  [-h] [-v] excel_file_path|translation_folder_path  project_resource_folder  [-f]
@@ -69,8 +81,93 @@ def version():
     print "version:1.0.0"
 
 
+def correct_language_code(code):
+    """
+    校正不规范语言码格式
+    :param code: 从文件名中获取到的语言码
+    :return: 符合Android规范的语言码
+    """
+
+    parts = code.split("_")
+    if len(parts) < 2:
+        return code
+
+    parts[1] = parts[1].upper()
+    return parts[0] + "-r" + parts[1]
+
+
+def format_file(input_file):
+    """
+    将文件整理成符合Android工程语言目录结构样式
+
+    :param input_file:待处理数据所在目录
+    :return:
+    """
+    for root, folder_names, file_names in os.walk(input_file):
+        for file_name in file_names:
+            if file_name.endswith("_strings.xml"):
+                # 获取语言前缀
+                prefix = file_name.split("_s")[0]
+                prefix = correct_language_code(prefix)
+                print root, file_name, prefix
+                new_dir = root + "/values-" + prefix
+                # 创建values目录
+                if not os.path.exists(new_dir):
+                    os.mkdir(new_dir)
+                new_file_path = new_dir + "/" + file_name
+                # 移动字符文件
+                shutil.move(root + "/" + file_name, new_file_path)
+                # 切换目录
+                os.chdir(new_dir)
+                # 重命名文件
+                os.rename(file_name, "strings.xml")
+                # 切回上一级目录
+                os.chdir("../")
+
+
+def combine(src_dir, dst_dir, key_map_file, force_update):
+    file_list = find_string_resource_files(src_dir)
+    dst_file_list = find_string_resource_files(dst_dir)
+    with open(os.path.realpath(key_map_file)) as key_map_fp:
+        key_map = json.load(key_map_fp)
+        # find the target string resource file
+        for dst_file in dst_file_list:
+            lang_code = os.path.basename(os.path.dirname(dst_file)).replace("values-", "")
+            src_file = find_string_resource_file_of(file_list, lang_code)
+            if src_file is None:
+                print "source file not exist:%s" % lang_code
+                continue
+
+            print src_file
+            strings = load_xml(src_file)
+            dst_strings = load_xml(dst_file)
+            rewrite = False
+            for key in list(key_map):
+                if not exist(strings, key):
+                    print "Warning:no key found!!!!"
+                    continue
+
+                value = strings.find("string[@name='%s']" % key).text
+                if not exist(dst_strings, key_map[key]):
+                    # 新建字符结点
+                    localize_element = etree.Element('string', name=key_map[key])
+                    localize_element.text = value
+                    # 追加结点
+                    dst_strings.getroot().append(localize_element)
+                    rewrite = True
+                elif force_update:
+                    print "Key already exist, update"
+                    dst_strings.find("string[@name='%s']" % key_map[key]).text = value
+                    rewrite = True
+                else:
+                    print "I:%s already exist, skip" % key_map[key]
+
+            if rewrite:
+                dst_strings.write(dst_file, xml_declaration=True, encoding='UTF-8', pretty_print=True)
+
+
 def combine_xml(src_folder, dest_folder, force_update):
-    # find string resouce file in source folder
+    # find string resource file in source folder
     src_file_list = find_string_resource_files(src_folder)
     if not src_file_list:
         print "No resource file found in source folder"
@@ -216,3 +313,4 @@ def find_string_resource_file_of(file_list, values_dir_name):
 
 if __name__ == "__main__":
     main(sys.argv[1:])
+    exit(0)
